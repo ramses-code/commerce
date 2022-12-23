@@ -1,0 +1,82 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    <div class="container-fluid">
+        <h2 class="text-center m-2 p-2">{{ listing.title }}</h2>
+
+        <div class="container">
+            <div class="row d-flex justify-content-center">
+                <div class="col-4">
+                    <div class="card">
+                        <img src="{{ listing.image }}" class="card-img-start" alt="{{ listing.title }}">
+                        <div class="card-body">
+                            <p class="card-text">{{ listing.description }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="d-flex flex-column">
+                        <form action="">
+                            {% csrf_token %}
+                            <div class="mx-2 my-1 px-2 py-1">
+                                <h5>${{ listing.starting_bid }}</h5>
+                            </div>
+                            <div class="mx-2 my-1 px-2 py-1">
+                                <p class="mb-0 pb-0">2 bid(s) so far.</p>
+                                <input type="text" placeholder="$">
+                            </div>
+                                {% if user.is_authenticated %}
+                                    <button class="btn btn-primary btn-sm mx-3 px-2" type="submit">Place Bid</button>
+                                {% else %}
+                                    <button class="btn btn-primary btn-sm mx-3 px-2" type="submit" disabled="true">Place Bid</button>
+                                {% endif %}
+                        </form>
+                        <div class="m-2 p-2">
+                            <h5>Details</h5>
+                            <ul>
+                                <li>Listed by: {{ listing.owner }}</li>
+                                <li>Category: {{ listing.category }}</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <form action="{% url 'handle_watchlist' id=listing.id %}" method="post">
+                        {% csrf_token %}
+                        <div class="d-flex align-items-start flex-column" style="height: 190px;">
+                            {% if user.is_authenticated %}
+                                {% if is_listing_in_watchlist %}
+                                    <button type="submit" class="btn btn-danger mx-2 mt-auto">Remove from watchlist</button>
+                                {% else %}
+                                    <button type="submit" class="btn btn-secondary mx-2 mt-auto">Add to watchlist</button>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="row">
+                <h3 class="m-2 p-1">Comments</h3>
+                <div class="container">
+                    <div class="row d-flex">
+                        <div class="col-8">
+                            {% for comment in comments %}
+                                <h6 class="mb-0 pb-0">{{ comment.author }}</h6>
+                                <p>{{ comment }}</p>
+                            {% endfor %}
+                        </div>
+                        {% if user.is_authenticated %}
+                            <div class="col-4">
+                                <form action="{% url 'comment' id=listing.id %}" method="post">
+                                    {% csrf_token %}
+                                    <label for="description">Write a comment</label>
+                                    <textarea class="form-control" name="comment" rows="5"></textarea>
+                                    <button type="submit" class="btn btn-primary mt-2">Send</button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
