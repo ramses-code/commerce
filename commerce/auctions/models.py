@@ -17,6 +17,7 @@ class Listings(models.Model):
     starting_bid = models.FloatField()
     image = models.CharField(max_length=600)
     is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, related_name='user')
     category = models.ForeignKey(Categories, on_delete=models.CASCADE, blank=True, related_name='categories')
     watchlist = models.ManyToManyField(User, blank=True, related_name='user_watchlist')
@@ -26,11 +27,11 @@ class Listings(models.Model):
 
 class Bids(models.Model):
     bid = models.FloatField()
-    author = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, related_name='bid_author')
-    listing = models.ForeignKey(Listings, on_delete=models.CASCADE, blank=True, related_name='bid_listing')
+    bidder = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True, related_name='bidder')
+    listing = models.ForeignKey(Listings, on_delete=models.CASCADE, blank=True, null=True, related_name='bid_listing')
 
     def __str__(self):
-        return self.bid
+        return f'{self.bid}'
 
 class Comments(models.Model):
     comment = models.CharField(max_length=300)

@@ -4,13 +4,22 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 
 from .models import User, Categories, Listings, Bids, Comments
 
 
 def index(request):
+    user = request.user
+    listings = []
+
+    try:
+        listings = user.user_watchlist.all()
+    except AttributeError:
+        pass
     return render(request, 'auctions/index.html', {
-        'listings': Listings.objects.filter(is_active=True)
+        'listings': Listings.objects.filter(is_active=True),
+        'watchlist_count': len(listings)
     })
 
 def login_view(request):
@@ -65,8 +74,11 @@ def register(request):
 @login_required
 def create_listing(request):
     if request.method == 'GET':
+        user = request.user
+        listings = user.user_watchlist.all()
         return render(request, 'auctions/create_listing.html', {
-            'categories': Categories.objects.all()
+            'categories': Categories.objects.all(),
+            'watchlist_count': len(listings)
         })
 
     if request.method == 'POST':
@@ -85,22 +97,36 @@ def create_listing(request):
         return HttpResponseRedirect(reverse('index'))
 
 def categories_view(request):
+    user = request.user 
+    listings = user.user_watchlist.all()
     return render(request, 'auctions/categories.html', {
-        'categories': Categories.objects.all()
+        'categories': Categories.objects.all(),
+        'watchlist_count': len(listings)
     })
 
 def category(request, category_name):
     category_type = Categories.objects.get(category=category_name)
+    user = request.user 
+    listings = user.user_watchlist.all()
     
     return render(request, 'auctions/category.html', {
         'category': Listings.objects.filter(is_active=True, category=category_type),
-        'name_of_category': category_type
+        'name_of_category': category_type,
+        'watchlist_count': len(listings)
     })
 
 def listing_view(request, id):
     listing = Listings.objects.get(pk=id)
     is_listing_in_watchlist = False
     user = request.user
+    listings = user.user_watchlist.all()
+    bids = Bids.objects.filter(listing=id)
+    greater_bid = listing.starting_bid
+
+    if len(bids) > 0:
+        for bid in bids:
+            if bid.bid > greater_bid:
+                greater_bid = bid
 
     if user in listing.watchlist.all():
         is_listing_in_watchlist = True
@@ -108,7 +134,10 @@ def listing_view(request, id):
     return render(request, 'auctions/listing_view.html', {
         'listing': listing,
         'is_listing_in_watchlist': is_listing_in_watchlist,
-        'comments': Comments.objects.filter(listing=listing)
+        'comments': Comments.objects.filter(listing=listing),
+        'watchlist_count': len(listings),
+        'item_bids': len(bids),
+        'greater_bid': greater_bid
     })
 
 @login_required
@@ -125,16 +154,42 @@ def handle_watchlist(request, id):
 
 @login_required
 def handle_bid(request, id):
-    ...
+    bid = request.POST['bid']
+    user = request.user
+    item_bids = Bids.objects.filter(listing=id)
+    listing = Listings.objects.get(pk=id)
+
+    try:
+        greater_bid = float(bid)
+        if greater_bid > listing.starting_bid:
+            if len(item_bids) > 0:
+                for b in item_bids:
+                    if greater_bid <= b.bid:
+                        messages.add_message(request, messages.ERROR, 'The bid must be greater than any other bids that have been placed.')
+                        return HttpResponseRedirect(reverse('listing', args=(id,)))
+            
+            new_bid = Bids(bid=greater_bid, bidder=user, listing=listing)
+            new_bid.save()
+            messages.add_message(request, messages.SUCCESS,'Your bid was successfully placed.')
+
+
+        else:
+            messages.add_message(request, messages.ERROR, 'The bid must be at least as large as the starting bid.')
+
+    except ValueError:
+        messages.add_message(request, messages.ERROR, 'The bid must be at least as large as the starting bid.')
+
+    return HttpResponseRedirect(reverse('listing', args=(id,)))
 
 @login_required
 def watchlist_view(request):
     user = request.user
-    listings = Listings.objects.filter(watchlist=user)
+    listings = user.user_watchlist.all()
     
 
     return render(request, 'auctions/watchlist.html', {
-        'listings': listings
+        'listings': listings,
+        'watchlist_count': len(listings)
     })
 
 @login_required

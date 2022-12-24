@@ -30,7 +30,7 @@
                     <a class="nav-link" href="{% url 'categories' %}">All Categories</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'watchlist' %}">Watchlist<span class="badge badge-primary m-1 p-1"></span></a>
+                    <a class="nav-link" href="{% url 'watchlist' %}">Watchlist<span class="badge badge-primary m-1 p-1">{{ watchlist_count }}</span></a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'logout' %}">Log Out</a>

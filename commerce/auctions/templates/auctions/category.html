@@ -1,7 +1,7 @@
 {% extends "auctions/layout.html" %}
 
 {% block body %}
-    <div class="container-fluid">
+    <div class="container-fluid" style="height: 100vh;">
         <h2 class="text-center m-2 p-2">{{ name_of_category }}</h2>
 
         <div class="container">
@@ -15,8 +15,8 @@
                                 <p class="card-text">{{ listing.description }}</p>
                             </div>
                             <div class="mb-2 pb-3">
-                                <h6 class="d-inline m-2 p-2">${{ listing.starting_bid }}</h6>
-                                <a href="#" class="d-inline btn btn-primary btn-sm">See more</a>
+                                <h6 class="d-inline ml-3">Starting Price: ${{ listing.starting_bid }}</h6>
+                                <a href="{% url 'listing' id=listing.id %}" class="d-inline btn btn-primary btn-sm">See more</a>
                             </div>
                         </div>
                     </div>

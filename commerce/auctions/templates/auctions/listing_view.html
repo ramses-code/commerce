@@ -16,32 +16,48 @@
                 </div>
                 <div class="col-4">
                     <div class="d-flex flex-column">
-                        <form action="">
+                        <form action="{% url 'bid' id=listing.id %}" method="post">
                             {% csrf_token %}
                             <div class="mx-2 my-1 px-2 py-1">
-                                <h5>${{ listing.starting_bid }}</h5>
+                                {% if item_bids == 0 %}
+                                    <h5>Starting Price: ${{ greater_bid }}</h5>
+                                {% else %}
+                                    <h5>Current Bid: ${{ greater_bid }}</h5>
+                                {% endif %}
                             </div>
                             <div class="mx-2 my-1 px-2 py-1">
-                                <p class="mb-0 pb-0">2 bid(s) so far.</p>
-                                <input type="text" placeholder="$">
+                                <p class="mb-0 pb-0">{{ item_bids }} bid(s) so far.</p>
+                                <input type="text" placeholder="$" name="bid">
                             </div>
+                            <div>
                                 {% if user.is_authenticated %}
                                     <button class="btn btn-primary btn-sm mx-3 px-2" type="submit">Place Bid</button>
                                 {% else %}
                                     <button class="btn btn-primary btn-sm mx-3 px-2" type="submit" disabled="true">Place Bid</button>
                                 {% endif %}
+                                {% if messages %}
+                                    {% for msg in messages %}
+                                        {% if msg.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+                                            <p class="message text-danger mx-3 p-0">{{ msg }}</p>
+                                        {% else %}
+                                            <p class="message text-success mx-3 p-0">{{ msg }}</p>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
                         </form>
                         <div class="m-2 p-2">
                             <h5>Details</h5>
                             <ul>
                                 <li>Listed by: {{ listing.owner }}</li>
                                 <li>Category: {{ listing.category }}</li>
+                                <li>Created: {{ listing.created_at }}</li>
                             </ul>
                         </div>
                     </div>
                     <form action="{% url 'handle_watchlist' id=listing.id %}" method="post">
                         {% csrf_token %}
-                        <div class="d-flex align-items-start flex-column" style="height: 190px;">
+                        <div class="d-flex align-items-start flex-column" style="height: 160px;">
                             {% if user.is_authenticated %}
                                 {% if is_listing_in_watchlist %}
                                     <button type="submit" class="btn btn-danger mx-2 mt-auto">Remove from watchlist</button>
@@ -59,7 +75,7 @@
                     <div class="row d-flex">
                         <div class="col-8">
                             {% for comment in comments %}
-                                <h6 class="mb-0 pb-0">{{ comment.author }}</h6>
+                                <p class="mb-0 pb-0">Posted by: <strong>{{ comment.author }}</strong></>
                                 <p>{{ comment }}</p>
                             {% endfor %}
                         </div>

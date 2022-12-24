@@ -8,7 +8,7 @@
         <div>{{ message }}</div>
     {% endif %}
 
-    <div class="container">
+    <div class="container" style="height: 630px;">
         <form action="{% url 'login' %}" method="post" class="register">
             {% csrf_token %}
             <div class="form-group col-8">
