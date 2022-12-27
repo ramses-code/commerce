@@ -11,15 +11,15 @@ from .models import User, Categories, Listings, Bids, Comments
 
 def index(request):
     user = request.user
-    listings = []
+    listings_count = []
 
     try:
-        listings = user.user_watchlist.all()
+        listings_count = user.user_watchlist.all()
     except AttributeError:
         pass
     return render(request, 'auctions/index.html', {
         'listings': Listings.objects.filter(is_active=True),
-        'watchlist_count': len(listings)
+        'watchlist_count': len(listings_count)
     })
 
 def login_view(request):
@@ -119,14 +119,19 @@ def listing_view(request, id):
     listing = Listings.objects.get(pk=id)
     is_listing_in_watchlist = False
     user = request.user
-    listings = user.user_watchlist.all()
-    bids = Bids.objects.filter(listing=id)
+    watchlist_count = []
+    bids = listing.bid_listing.all()
     greater_bid = listing.starting_bid
 
+    try:
+        watchlist_count = user.user_watchlist.all()
+    except AttributeError:
+        pass
+    
     if len(bids) > 0:
         for bid in bids:
             if bid.bid > greater_bid:
-                greater_bid = bid
+                greater_bid = bid.bid
 
     if user in listing.watchlist.all():
         is_listing_in_watchlist = True
@@ -135,9 +140,11 @@ def listing_view(request, id):
         'listing': listing,
         'is_listing_in_watchlist': is_listing_in_watchlist,
         'comments': Comments.objects.filter(listing=listing),
-        'watchlist_count': len(listings),
+        'watchlist_count': len(watchlist_count),
         'item_bids': len(bids),
-        'greater_bid': greater_bid
+        'greater_bid': greater_bid,
+        'msg': 'This listing is no longer active.',
+        'winner_msg': 'YOU ARE THE WINNER!'
     })
 
 @login_required
@@ -156,8 +163,8 @@ def handle_watchlist(request, id):
 def handle_bid(request, id):
     bid = request.POST['bid']
     user = request.user
-    item_bids = Bids.objects.filter(listing=id)
     listing = Listings.objects.get(pk=id)
+    item_bids = listing.bid_listing.all()
 
     try:
         greater_bid = float(bid)
@@ -200,5 +207,24 @@ def comment(request, id):
 
     new_msg = Comments(comment=msg, author=user, listing=listing)
     new_msg.save()
+
+    return HttpResponseRedirect(reverse('listing', args=(id, )))
+
+@login_required
+def close_auction(request, id):
+    listing = Listings.objects.get(pk=id)
+    listing_bids = listing.bid_listing.all()
+    greater_bid = listing.starting_bid
+    winner = ''
+
+    if len(listing_bids) > 0:
+        for bid in listing_bids:
+            if bid.bid > greater_bid:
+                greater_bid = bid.bid
+                winner = bid.bidder
+        listing.winner = winner
+        
+    listing.is_active = False
+    listing.save()
 
     return HttpResponseRedirect(reverse('listing', args=(id, )))

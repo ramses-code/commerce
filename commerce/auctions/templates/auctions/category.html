@@ -15,7 +15,7 @@
                                 <p class="card-text">{{ listing.description }}</p>
                             </div>
                             <div class="mb-2 pb-3">
-                                <h6 class="d-inline ml-3">Starting Price: ${{ listing.starting_bid }}</h6>
+                                <h6 class="d-inline ml-3">Starting bid: ${{ listing.starting_bid|floatformat:2 }}</h6>
                                 <a href="{% url 'listing' id=listing.id %}" class="d-inline btn btn-primary btn-sm">See more</a>
                             </div>
                         </div>
